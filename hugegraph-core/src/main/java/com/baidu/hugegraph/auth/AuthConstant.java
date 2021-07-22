@@ -17,33 +17,13 @@
  * under the License.
  */
 
-package com.baidu.hugegraph.type.define;
+package com.baidu.hugegraph.auth;
 
-public enum ReadFrequency implements SerialEnum {
+public interface AuthConstant {
 
-    OLTP(1, "oltp"),
-
-    OLAP(2, "olap");
-
-    private byte code = 0;
-    private String name = null;
-
-    static {
-        SerialEnum.register(ReadFrequency.class);
-    }
-
-    ReadFrequency(int code, String name) {
-        assert code < 256;
-        this.code = (byte) code;
-        this.name = name;
-    }
-
-    @Override
-    public byte code() {
-        return this.code;
-    }
-
-    public String string() {
-        return this.name;
-    }
+    /*
+     * Fields in token
+     */
+    String TOKEN_USER_NAME = "user_name";
+    String TOKEN_USER_ID = "user_id";
 }

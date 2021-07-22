@@ -38,16 +38,21 @@ import com.baidu.hugegraph.backend.query.Condition.RelationType;
 import com.baidu.hugegraph.perf.PerfUtil.Watched;
 import com.baidu.hugegraph.structure.HugeElement;
 import com.baidu.hugegraph.type.HugeType;
+import com.baidu.hugegraph.type.define.CollectionType;
 import com.baidu.hugegraph.type.define.HugeKeys;
 import com.baidu.hugegraph.util.E;
 import com.baidu.hugegraph.util.LongEncoding;
 import com.baidu.hugegraph.util.NumericUtil;
+import com.baidu.hugegraph.util.collection.CollectionFactory;
 import com.google.common.base.Function;
+import com.google.common.collect.ImmutableSet;
 
 public final class ConditionQuery extends IdQuery {
 
+    private static final Set<Condition> EMPTY_CONDITIONS = ImmutableSet.of();
+
     // Conditions will be concated with `and` by default
-    private Set<Condition> conditions = new LinkedHashSet<>();
+    private Set<Condition> conditions = EMPTY_CONDITIONS;
 
     private OptimizedType optimizedType = OptimizedType.NONE;
     private Function<HugeElement, Boolean> resultsFilter = null;
@@ -73,6 +78,9 @@ public final class ConditionQuery extends IdQuery {
             }
         }
 
+        if (this.conditions == EMPTY_CONDITIONS) {
+            this.conditions = CollectionFactory.newSet(CollectionType.EC);
+        }
         this.conditions.add(condition);
         return this;
     }
@@ -142,6 +150,15 @@ public final class ConditionQuery extends IdQuery {
         return relations;
     }
 
+    public Relation relation(Id key){
+        for (Relation r : this.relations()) {
+            if (r.key().equals(key)) {
+                return r;
+            }
+        }
+        return null;
+    }
+
     @Watched
     public <T> T condition(Object key) {
         List<Object> values = new ArrayList<>();
@@ -207,6 +224,16 @@ public final class ConditionQuery extends IdQuery {
 
     public boolean containsScanCondition() {
         return this.containsCondition(Condition.RelationType.SCAN);
+    }
+
+    public boolean containsContainsCondition(Id key) {
+        for (Relation r : this.relations()) {
+            if (r.key().equals(key)) {
+                return r.relation().equals(RelationType.CONTAINS) ||
+                       r.relation().equals(RelationType.TEXT_CONTAINS);
+            }
+        }
+        return false;
     }
 
     public boolean allSysprop() {
@@ -310,10 +337,11 @@ public final class ConditionQuery extends IdQuery {
             boolean got = false;
             for (Relation r : this.userpropRelations()) {
                 if (r.key().equals(field) && !r.isSysprop()) {
-                    E.checkState(r.relation == RelationType.EQ,
+                    E.checkState(r.relation == RelationType.EQ ||
+                                 r.relation == RelationType.CONTAINS,
                                  "Method userpropValues(List<String>) only " +
                                  "used for secondary index, " +
-                                 "relation must be EQ, but got %s",
+                                 "relation must be EQ or CONTAINS, but got %s",
                                  r.relation());
                     values.add(r.serialValue());
                     got = true;
@@ -399,7 +427,10 @@ public final class ConditionQuery extends IdQuery {
     public ConditionQuery copy() {
         ConditionQuery query = (ConditionQuery) super.copy();
         query.originQuery(this);
-        query.conditions = new LinkedHashSet<>(this.conditions);
+        query.conditions = this.conditions == EMPTY_CONDITIONS ?
+                           EMPTY_CONDITIONS :
+                           CollectionFactory.newSet(CollectionType.EC,
+                                                    this.conditions);
 
         query.optimizedType = OptimizedType.NONE;
         query.resultsFilter = null;
@@ -507,12 +538,27 @@ public final class ConditionQuery extends IdQuery {
         return SplicingIdGenerator.concatValues(newValues);
     }
 
+    public static String concatValues(Object value) {
+        if (value instanceof List) {
+            return concatValues((List<Object>)value);
+        }
+
+        if (needConvertNumber(value)) {
+            return LongEncoding.encodeNumber(value);
+        }
+        return value.toString();
+    }
+
     private static Object convertNumberIfNeeded(Object value) {
-        if (NumericUtil.isNumber(value) || value instanceof Date) {
-            // Numeric or date values should be converted to string
+        if (needConvertNumber(value)) {
             return LongEncoding.encodeNumber(value);
         }
         return value;
+    }
+
+    private static boolean needConvertNumber(Object value) {
+        // Numeric or date values should be converted to number from string
+        return NumericUtil.isNumber(value) || value instanceof Date;
     }
 
     public enum OptimizedType {

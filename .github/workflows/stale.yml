@@ -26,8 +26,8 @@ jobs:
         days-before-issue-close: 20
         days-before-pr-stale: 30
         days-before-pr-close: 180
-        operations-per-run: 25
-        start-date: '2020-12-01T00:00:00Z'
+        operations-per-run: 10
+        start-date: '2018-10-01T00:00:00Z'
 
         exempt-all-assignees: true
         remove-stale-when-updated: true

@@ -20,8 +20,10 @@
 package com.baidu.hugegraph.auth;
 
 import java.util.List;
+import java.util.Set;
 
-import com.baidu.hugegraph.auth.RolePermission;
+import javax.security.sasl.AuthenticationException;
+
 import com.baidu.hugegraph.auth.SchemaDefine.AuthElement;
 import com.baidu.hugegraph.backend.id.Id;
 
@@ -69,8 +71,21 @@ public interface AuthManager {
     public List<HugeAccess> listAccessByGroup(Id group, long limit);
     public List<HugeAccess> listAccessByTarget(Id target, long limit);
 
+    public Id createProject(HugeProject project);
+    public HugeProject deleteProject(Id id);
+    public Id updateProject(HugeProject project);
+    public Id projectAddGraphs(Id id, Set<String> graphs);
+    public Id projectRemoveGraphs(Id id, Set<String> graphs);
+    public HugeProject getProject(Id id);
+    public List<HugeProject> listAllProject(long limit);
+
     public HugeUser matchUser(String name, String password);
     public RolePermission rolePermission(AuthElement element);
 
-    public RolePermission loginUser(String username, String password);
+    public String loginUser(String username, String password)
+                            throws AuthenticationException;
+    public void logoutUser(String token);
+
+    public UserWithRole validateUser(String username, String password);
+    public UserWithRole validateUser(String token);
 }

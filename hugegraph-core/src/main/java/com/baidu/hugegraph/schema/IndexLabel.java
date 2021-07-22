@@ -112,9 +112,6 @@ public class IndexLabel extends SchemaElement {
     }
 
     public Id indexField() {
-        E.checkState(this.indexType.isRange() || this.indexType.isSearch(),
-                     "Can't call indexField() for %s index label",
-                     this.indexType.string());
         E.checkState(this.indexFields.size() == 1,
                      "There should be only one field in %s index label, " +
                      "but got: %s", this.indexType.string(), this.indexFields);
@@ -131,6 +128,10 @@ public class IndexLabel extends SchemaElement {
                this.baseType == other.baseType &&
                Objects.equal(this.graph.mapPkId2Name(this.indexFields),
                              other.graph.mapPkId2Name(other.indexFields));
+    }
+
+    public boolean olap() {
+        return OLAP_ID.equals(this.baseValue);
     }
 
     // ABS of System index id must be below SchemaElement.MAX_PRIMITIVE_SYS_ID
@@ -237,7 +238,7 @@ public class IndexLabel extends SchemaElement {
 
     public interface Builder extends SchemaBuilder<IndexLabel> {
 
-        CreatedIndexLabel createWithTask();
+        TaskWithSchema createWithTask();
 
         Id rebuild();
 
@@ -268,32 +269,4 @@ public class IndexLabel extends SchemaElement {
         Builder rebuild(boolean rebuild);
     }
 
-    public static class CreatedIndexLabel {
-
-        private IndexLabel indexLabel;
-        private Id task;
-
-        public CreatedIndexLabel(IndexLabel indexLabel, Id task) {
-            E.checkNotNull(indexLabel, "index label");
-            this.indexLabel = indexLabel;
-            this.task = task;
-        }
-
-        public void indexLabel(IndexLabel indexLabel) {
-            E.checkNotNull(indexLabel, "index label");
-            this.indexLabel = indexLabel;
-        }
-
-        public IndexLabel indexLabel() {
-            return this.indexLabel;
-        }
-
-        public void task(Id task) {
-            this.task = task;
-        }
-
-        public Id task() {
-            return this.task;
-        }
-    }
 }

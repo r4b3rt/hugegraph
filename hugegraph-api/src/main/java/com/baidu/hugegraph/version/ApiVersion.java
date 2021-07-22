@@ -112,10 +112,13 @@ public final class ApiVersion {
      * [0.60] Issue-1392: Support create and resume snapshot
      * [0.61] Issue-1433: Unify naming of degree for oltp algorithms
      * [0.62] Issue-1378: Add compact api for rocksdb/cassandra/hbase backend
+     * [0.63] Issue-1500: Add user-login RESTful API
+     * [0.64] Issue-1504: Add auth-project RESTful API
+     * [0.65] Issue-1506: Support olap property key
      */
 
     // The second parameter of Version.of() is for IDE running without JAR
-    public static final Version VERSION = Version.of(ApiVersion.class, "0.62");
+    public static final Version VERSION = Version.of(ApiVersion.class, "0.65");
 
     public static final void check() {
         // Check version of hugegraph-core. Firstly do check from version 0.3
